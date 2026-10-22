@@ -92,7 +92,9 @@ http.createServer(async (req, res) => {
   // webOS 6 sends "file://<appId>-webos" for local apps instead of "null": accept it for our apps and the Home slot only
   if (/^file:\/\/(com\.webos\.app\.home|com\.cleanyourtv\.(manager|picker|notify|live))-webos$/.test(origin || '')) origin = 'null';
   if (origin !== undefined && origin !== 'null') { console.log('refused origin ' + origin + ' ' + req.method + ' ' + req.url.slice(0, 60)); res.writeHead(403, { 'content-type': 'application/json' }); return res.end('{"error":"origin not allowed"}'); }
-  if (origin === 'null') { res.setHeader('Access-Control-Allow-Origin', rawOrigin); res.setHeader('Vary', 'Origin'); }
+  // '*' rather than echoing: Chromium 79 on webOS 6 sends "file://<appId>-webos" but matches the answer against its own
+  // serialisation of a file origin, so an echoed value fails CORS (crossOrigin icons). Only already-accepted origins get here.
+  if (origin === 'null') { res.setHeader('Access-Control-Allow-Origin', rawOrigin === 'null' ? 'null' : '*'); res.setHeader('Vary', 'Origin'); }
   res.setHeader('Access-Control-Allow-Headers', 'content-type');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
   const json = (o, c) => { res.writeHead(c || 200, { 'content-type': 'application/json' }); res.end(JSON.stringify(o)); };
