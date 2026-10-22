@@ -36,7 +36,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:var(--night);col
 
 .tile{--c:74,84,112;--b:20,22,27;position:relative;display:flex;align-items:center;justify-content:center;will-change:transform;
   background:rgb(var(--b));transition:transform .15s ease-out}
-.tile img{object-fit:contain}
+.tile img{object-fit:contain;border-radius:18%}
 .tile svg{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
 .tile .t{font-size:26px;font-weight:600;padding:12px;text-align:center;line-height:1.15;opacity:.9}
 .tile.f{z-index:3;outline:4px solid rgba(255,255,255,.95);outline-offset:4px;box-shadow:0 24px 36px rgba(0,0,0,.6)}
@@ -139,7 +139,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:var(--night);col
 <div id="lv"><div id="lv-stage"></div><div id="lv-spin" class="layer"></div><div id="lv-osd" class="layer"><img class="logo" id="lv-ologo" alt=""><div class="num" id="lv-onum"></div><div class="info"><div class="name" id="lv-oname"></div><div class="now" id="lv-onow"></div><div class="next" id="lv-onext"></div><div class="pbar"><i id="lv-obar"></i></div></div></div><div id="lv-numin" class="layer"></div><div id="lv-guide" class="layer"><div id="lv-glow"></div><div id="lv-gtop"><div id="lv-gtitle"></div><div id="lv-gtabs"></div><div id="lv-gclock"></div></div><div id="lv-rows"></div><div id="lv-detail"></div></div><div id="lv-msg" class="layer"></div></div>
 <div id="toast"></div>
 <script>
-var API='http://127.0.0.1:8765', CACHE_KEY='cytv.cache.v2', VERSION='1.4.2';
+var API='http://127.0.0.1:8765', CACHE_KEY='cytv.cache.v3', VERSION='1.4.2';
 var DEFAULTS={
   dock:['netflix','youtube.leanback.v4','amazon','com.disney.disneyplus-prod'],
   topbar:[{label:'Inputs',icon:'inputs',action:'inputs'},{label:'Live TV',icon:'tv',action:'live'},{label:'Settings',icon:'settings',app:'com.palm.app.settings'}]
@@ -224,7 +224,7 @@ function tile(a){
   if(!known)i.crossOrigin='anonymous';
   i.onload=function(){if(!colors[a.id]){colors[a.id]=iconColor(i,a.id);paint(d,colors[a.id]);storeSoon();if(rows[r]&&rows[r][c]===d)glowNow(d)}};
   i.onerror=function(){i.remove();var t=document.createElement('div');t.className='t';t.textContent=a.title;d.appendChild(t);
-    if(!colors[a.id]){var f=hsl2rgb(hashHue(a.id),.42,.42);colors[a.id]={c:f,b:hsl2rgb(hashHue(a.id),.4,.2)};paint(d,colors[a.id])}};
+    if(!colors[a.id]){var f=hsl2rgb(hashHue(a.id),.42,.42);paint(d,{c:f,b:hsl2rgb(hashHue(a.id),.4,.2)})}};   /* fallback not cached: a failed load must not pin a made-up colour */
   i.src=a.id==='__live'?LIVE_ICON:API+'/icon/'+encodeURIComponent(a.id);d.appendChild(i);
   return d}
 
