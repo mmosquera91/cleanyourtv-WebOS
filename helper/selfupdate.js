@@ -7,7 +7,7 @@
 const fs = require('fs'), cp = require('child_process');
 const { fetch, cmp } = require('./manager');
 const D = '/media/developer/cleanyourtv', SVC = '/media/developer/apps/usr/palm/services/com.cleanyourtv.manager.service';
-const DEFAULT_REPO = 'lasharor/cleanyourtv-WebOS', TMP = '/tmp/cytv-self.ipk';
+const DEFAULT_REPO = 'mmosquera91/cleanyourtv-WebOS', TMP = '/tmp/cytv-self.ipk';
 const ENV = Object.assign({}, process.env, { PATH: '/usr/bin:/usr/sbin:/bin:/sbin:' + (process.env.PATH || '') });
 const say = m => console.log(m);
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (_) { return d; } };

@@ -1,9 +1,10 @@
 // Manager API (/api/manager/*): status, update checks, launcher (frontend) updates with rollback, service updates,
 // options, and restoring LG's Home. Used by the CleanYourTV manager app on the TV.
 const fs = require('fs'), path = require('path'), cp = require('child_process'), crypto = require('crypto'), https = require('https'), http = require('http');
+const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL
 const D = '/media/developer/cleanyourtv';
 const SERVICE_DIR = '/media/developer/apps/usr/palm/services/com.cleanyourtv.manager.service';
-const DEFAULT_REPO = 'lasharor/cleanyourtv-WebOS';
+const DEFAULT_REPO = 'mmosquera91/cleanyourtv-WebOS';
 const ENV = Object.assign({}, process.env, { PATH: '/usr/bin:/usr/sbin:/bin:/sbin:' + (process.env.PATH || '') });
 
 const semver = v => String(v || '0').replace(/^v/, '').split('.').map(n => parseInt(n, 10) || 0);

@@ -4,6 +4,9 @@
 // removable again. It is a 64-bit program, so it runs through its own copy of the 64-bit C library, which this TV (32-bit
 // userland on a 64-bit kernel) does not have. API (loopback only): GET /api/voice/status, POST install | uninstall | set | listen.
 const fs = require('fs'), path = require('path'), cp = require('child_process'), crypto = require('crypto'), https = require('https'), http = require('http'), zlib = require('zlib'), net = require('net');
+const mkdirp = d => { try { require('fs').mkdirSync(d); } catch (e) {   // Node 8 has no {recursive: true}
+  if (e.code === 'ENOENT') { mkdirp(require('path').dirname(d)); require('fs').mkdirSync(d); } else if (e.code !== 'EEXIST') throw e; } };
+const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL
 const D = '/media/developer/cleanyourtv', V = D + '/voice', LIB = V + '/lib', MODEL = V + '/model', TMP = V + '/tmp';
 const SERVICE_DIR = '/media/developer/apps/usr/palm/services/com.cleanyourtv.manager.service';
 const ENV = Object.assign({}, process.env, { PATH: '/usr/bin:/usr/sbin:/bin:/sbin:' + (process.env.PATH || '') });
@@ -74,7 +77,7 @@ function unzip(file, want) {
 const run = (cmd, args, ms) => new Promise((res, rej) => cp.execFile(cmd, args, { env: ENV, timeout: ms || 120000, maxBuffer: 4 << 20 }, (e, o, er) => e ? rej(new Error(String(er || e.message).trim().split('\n').pop())) : res(o)));
 
 async function doInstall() {
-  rmrf(V); fs.mkdirSync(TMP, { recursive: true }); fs.mkdirSync(LIB, { recursive: true }); fs.mkdirSync(MODEL, { recursive: true });
+  rmrf(V); mkdirp(TMP); mkdirp(LIB); mkdirp(MODEL);
   setJob('working', 'Downloading the speech engine (18 MB)');
   await download(SRC.wheel.url, TMP + '/engine.whl', SRC.wheel.sha256);
   const f = unzip(TMP + '/engine.whl', n => /^moonshine_voice\/libmoonshine\.so$|^moonshine_voice\.libs\/libonnxruntime-[\w]+\.so\.1$/.test(n));

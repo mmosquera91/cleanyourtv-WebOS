@@ -1,10 +1,13 @@
 // Live TV backend for the launcher: reads an M3U playlist (and its XMLTV guide), serves them to the Live TV app,
 // and runs a short-lived pairing page on the LAN so the playlist address can be entered from a phone or computer.
 const http = require('http'), https = require('https'), fs = require('fs'), os = require('os'), zlib = require('zlib'), crypto = require('crypto');
+const mkdirp = d => { try { require('fs').mkdirSync(d); } catch (e) {   // Node 8 has no {recursive: true}
+  if (e.code === 'ENOENT') { mkdirp(require('path').dirname(d)); require('fs').mkdirSync(d); } else if (e.code !== 'EEXIST') throw e; } };
+const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL
 const DIR = process.env.CYTV_LIVE_DIR || '/media/developer/cleanyourtv/live';
 const SETTINGS = DIR + '/settings.json', PLAYLIST = DIR + '/playlist.json', EPG = DIR + '/epg.json';
 const PAIR_PORT = 8766, PAIR_MS = 10 * 60 * 1000, REFRESH_MS = 12 * 3600 * 1000;
-try { fs.mkdirSync(DIR, { recursive: true }); } catch (_) {}
+try { mkdirp(DIR); } catch (_) {}
 
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (_) { return d; } };
 const writeJson = (f, o) => { fs.writeFileSync(f + '.tmp', JSON.stringify(o), { mode: 0o600 }); fs.renameSync(f + '.tmp', f); };   // the playlist address holds an access key: owner only
