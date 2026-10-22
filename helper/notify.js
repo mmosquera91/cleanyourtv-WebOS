@@ -1,6 +1,9 @@
 // Notifications with pictures: the TV's own toasts are text-only, so this shows a card in a small transparent
 // overlay window (the notify app) on top of whatever is running. POST /api/notify {title, text, image, seconds, position}
 const http = require('http'), https = require('https'), cp = require('child_process');
+[require('http'), require('https')].forEach(lib => { if (lib.__n8) return; const o = lib.get; lib.__n8 = true;   // Node 8: get(url, options, cb)
+  lib.get = function (u, op, cb) { if (typeof op === 'function' || op === undefined) return o.call(lib, u, op);
+    const p = require('url').parse(typeof u === 'string' ? u : String(u.href || u)); return o.call(lib, Object.assign({}, p, op), cb); }; });
 const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL
 const ENV = Object.assign({}, process.env, { PATH: '/usr/bin:/usr/sbin:/bin:/sbin:' + (process.env.PATH || '') });
 const images = new Map();   // id -> {type, buf}; kept in memory, newest few only

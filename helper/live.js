@@ -1,6 +1,9 @@
 // Live TV backend for the launcher: reads an M3U playlist (and its XMLTV guide), serves them to the Live TV app,
 // and runs a short-lived pairing page on the LAN so the playlist address can be entered from a phone or computer.
 const http = require('http'), https = require('https'), fs = require('fs'), os = require('os'), zlib = require('zlib'), crypto = require('crypto');
+[require('http'), require('https')].forEach(lib => { if (lib.__n8) return; const o = lib.get; lib.__n8 = true;   // Node 8: get(url, options, cb)
+  lib.get = function (u, op, cb) { if (typeof op === 'function' || op === undefined) return o.call(lib, u, op);
+    const p = require('url').parse(typeof u === 'string' ? u : String(u.href || u)); return o.call(lib, Object.assign({}, p, op), cb); }; });
 const mkdirp = d => { try { require('fs').mkdirSync(d); } catch (e) {   // Node 8 has no {recursive: true}
   if (e.code === 'ENOENT') { mkdirp(require('path').dirname(d)); require('fs').mkdirSync(d); } else if (e.code !== 'EEXIST') throw e; } };
 const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL

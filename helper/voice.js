@@ -4,6 +4,9 @@
 // removable again. It is a 64-bit program, so it runs through its own copy of the 64-bit C library, which this TV (32-bit
 // userland on a 64-bit kernel) does not have. API (loopback only): GET /api/voice/status, POST install | uninstall | set | listen.
 const fs = require('fs'), path = require('path'), cp = require('child_process'), crypto = require('crypto'), https = require('https'), http = require('http'), zlib = require('zlib'), net = require('net');
+[require('http'), require('https')].forEach(lib => { if (lib.__n8) return; const o = lib.get; lib.__n8 = true;   // Node 8: get(url, options, cb)
+  lib.get = function (u, op, cb) { if (typeof op === 'function' || op === undefined) return o.call(lib, u, op);
+    const p = require('url').parse(typeof u === 'string' ? u : String(u.href || u)); return o.call(lib, Object.assign({}, p, op), cb); }; });
 const mkdirp = d => { try { require('fs').mkdirSync(d); } catch (e) {   // Node 8 has no {recursive: true}
   if (e.code === 'ENOENT') { mkdirp(require('path').dirname(d)); require('fs').mkdirSync(d); } else if (e.code !== 'EEXIST') throw e; } };
 const { URL, URLSearchParams } = require('url');   // Node 8 (webOS 6) has no global URL
