@@ -139,7 +139,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:var(--night);col
 <div id="lv"><div id="lv-stage"></div><div id="lv-spin" class="layer"></div><div id="lv-osd" class="layer"><img class="logo" id="lv-ologo" alt=""><div class="num" id="lv-onum"></div><div class="info"><div class="name" id="lv-oname"></div><div class="now" id="lv-onow"></div><div class="next" id="lv-onext"></div><div class="pbar"><i id="lv-obar"></i></div></div></div><div id="lv-numin" class="layer"></div><div id="lv-guide" class="layer"><div id="lv-glow"></div><div id="lv-gtop"><div id="lv-gtitle"></div><div id="lv-gtabs"></div><div id="lv-gclock"></div></div><div id="lv-rows"></div><div id="lv-detail"></div></div><div id="lv-msg" class="layer"></div></div>
 <div id="toast"></div>
 <script>
-var API='http://127.0.0.1:8765', CACHE_KEY='cytv.cache.v3', VERSION='1.4.2';
+var API='http://127.0.0.1:8765', CACHE_KEY='cytv.cache.v3', VERSION='1.4.3';
 var DEFAULTS={
   dock:['netflix','youtube.leanback.v4','amazon','com.disney.disneyplus-prod'],
   topbar:[{label:'Inputs',icon:'inputs',action:'inputs'},{label:'Live TV',icon:'tv',action:'live'},{label:'Settings',icon:'settings',app:'com.palm.app.settings'}]
@@ -261,7 +261,7 @@ function topbar(){return cfg.topbar?cfg.topbar:DEFAULTS.topbar}
 function byOrder(a,b){
   if(cfg.sort!=='alpha'){var d=(usage[b.id]||0)-(usage[a.id]||0);if(Math.abs(d)>1e-9)return d>0?1:-1}
   return a.title.localeCompare(b.title)}
-function title(id){for(var i=0;i<apps.length;i++)if(apps[i].id===id)return apps[i].title;return id}
+function title(id){if(id==='__undo')return t('Restore LG Home');for(var i=0;i<apps.length;i++)if(apps[i].id===id)return apps[i].title;return id}
 
 /* ---------- actions ---------- */
 function act(e){
@@ -348,7 +348,7 @@ function addButtonMenu(){
       return {label:a.title,fn:function(){cfg.topbar=topbar().concat([{label:a.title,icon:'grid',app:a.id}]);saveCfg()}}}))}});
   openMenu(t('Add a button'),items)}
 function hiddenMenu(){
-  var h=(cfg.hidden||[]).filter(function(id){return apps.some(function(a){return a.id===id})});
+  var h=(cfg.hidden||[]).filter(function(id){return id==='__undo'||apps.some(function(a){return a.id===id})});
   if(!h.length)return toast(t('No hidden apps'));
   openMenu(t('Hidden apps (OK to show again)'),h.map(function(id){return {label:title(id),fn:function(){unhideApp(id)}}}))}
 
@@ -357,7 +357,7 @@ function rebuild(){
   var by={};apps.forEach(function(a){by[a.id]=a});
   var di=dockIds(),dock=di.map(function(i){return by[i]});
   var rest=apps.filter(function(a){return !isHidden(a.id)&&di.indexOf(a.id)<0}).sort(byOrder);
-  rest.push({id:'__undo',title:t('Restore LG Home'),sys:true,icon:'restore'});
+  if(!isHidden('__undo'))rest.push({id:'__undo',title:t('Restore LG Home'),sys:true,icon:'restore'});   /* hideable (fork) */
   var oldE=rows[r]&&rows[r][c],keep=oldE&&oldE._a?oldE._a.id:null;
   if(oldE)oldE.classList.remove('f');
   var dk=$('dock'),gd=$('grid'),bar=$('bar');
@@ -389,7 +389,8 @@ function hit(e){
   e.addEventListener('mouseup',function(){clearTimeout(pressT)});
   e.addEventListener('click',function(){if(held){held=false;return}act(e)})}
 function options(e){
-  if(e._a&&!e._a.sys)appMenu(e._a);
+  if(e._a&&e._a.id==='__undo')openMenu(t('Restore LG Home'),[{label:t('Hide app'),fn:function(){hideApp('__undo')}}]);
+  else if(e._a&&!e._a.sys)appMenu(e._a);
   else if(e._o&&!e._o.fixed)barMenu(e._o)}
 
 /* Pointer focus follows real pointer movement only: a tile sliding under a still cursor, a cursor jitter when
@@ -571,13 +572,14 @@ try{var cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
   if(cached&&cached.apps&&cached.apps.length){apps=cached.apps;cfg=cached.cfg||{};usage=cached.usage||{};colors=cached.colors||{};rebuild()}}catch(e){}
 load();wantInputs();
 api('/api/frontend-ok',{version:VERSION}).catch(function(){});   // lets the manager know an updated launcher started
-</script><script>/* flex-gap polyfill for Chromium < 84 (webOS 6) */(function(){
+</script><script>/* flex-gap polyfill v2 for Chromium < 84 (webOS 6) */(function(){
 var t=document.createElement('div');t.style.cssText='display:flex;flex-direction:column;row-gap:1px;position:absolute';t.appendChild(document.createElement('div'));t.appendChild(document.createElement('div'));
 function go(){document.body.appendChild(t);var ok=t.scrollHeight===1;document.body.removeChild(t);if(ok)return;
-function fix(){var els=document.querySelectorAll('*');for(var i=0;i<els.length;i++){var e=els[i],cs=getComputedStyle(e);if(cs.display.indexOf('flex')<0)continue;
+function fix(){var old=document.querySelectorAll('[data-fg]');for(var k=0;k<old.length;k++){old[k].style.marginTop='';old[k].style.marginLeft='';old[k].removeAttribute('data-fg')}
+var els=document.querySelectorAll('*');for(var i=0;i<els.length;i++){var e=els[i],cs=getComputedStyle(e);if(cs.display.indexOf('flex')<0)continue;
 var cg=parseFloat(cs.columnGap)||0,rg=parseFloat(cs.rowGap)||0;if(!cg&&!rg)continue;var col=cs.flexDirection.indexOf('column')===0,first=true;
-for(var c=e.firstElementChild;c;c=c.nextElementSibling){if(getComputedStyle(c).position==='absolute'||getComputedStyle(c).display==='none')continue;
-if(first){first=false;continue;}if(col){if(!c.style.marginTop)c.style.marginTop=rg+'px';}else{if(!c.style.marginLeft)c.style.marginLeft=cg+'px';}}}}
-fix();var pend=0;new MutationObserver(function(){if(pend)return;pend=setTimeout(function(){pend=0;fix();},50);}).observe(document.body,{childList:true,subtree:true});}
+for(var c=e.firstElementChild;c;c=c.nextElementSibling){var ccs=getComputedStyle(c);if(ccs.position==='absolute'||ccs.display==='none')continue;
+if(first){first=false;continue;}if(col){if(!c.style.marginTop){c.style.marginTop=rg+'px';c.setAttribute('data-fg','')}}else{if(!c.style.marginLeft){c.style.marginLeft=cg+'px';c.setAttribute('data-fg','')}}}}}
+fix();var pend=0;new MutationObserver(function(m){for(var j=0;j<m.length;j++)if(m[j].type==='childList'){if(pend)return;pend=setTimeout(function(){pend=0;fix();},50);return}}).observe(document.body,{childList:true,subtree:true});}
 if(document.body)go();else document.addEventListener('DOMContentLoaded',go);})();</script>
 </body></html>
