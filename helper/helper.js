@@ -87,9 +87,12 @@ const body = req => new Promise(r => { let b = ''; req.on('data', c => b += c); 
 http.createServer(async (req, res) => {
   // Our apps are local files (their requests carry Origin "null"); curl and scripts send no Origin. A web page opened in the
   // TV's browser has an http(s) origin and is refused, so it cannot drive this root service.
-  const origin = req.headers.origin;
+  let origin = req.headers.origin;
+  const rawOrigin = origin;
+  // webOS 6 sends "file://<appId>-webos" for local apps instead of "null": accept it for our apps and the Home slot only
+  if (/^file:\/\/(com\.webos\.app\.home|com\.cleanyourtv\.(manager|picker|notify|live))-webos$/.test(origin || '')) origin = 'null';
   if (origin !== undefined && origin !== 'null') { console.log('refused origin ' + origin + ' ' + req.method + ' ' + req.url.slice(0, 60)); res.writeHead(403, { 'content-type': 'application/json' }); return res.end('{"error":"origin not allowed"}'); }
-  if (origin === 'null') { res.setHeader('Access-Control-Allow-Origin', 'null'); res.setHeader('Vary', 'Origin'); }
+  if (origin === 'null') { res.setHeader('Access-Control-Allow-Origin', rawOrigin); res.setHeader('Vary', 'Origin'); }
   res.setHeader('Access-Control-Allow-Headers', 'content-type');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
   const json = (o, c) => { res.writeHead(c || 200, { 'content-type': 'application/json' }); res.end(JSON.stringify(o)); };
