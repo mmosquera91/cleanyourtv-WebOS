@@ -103,9 +103,10 @@ function create(ctx) {
     if (got !== want) { try { fs.unlinkSync(dest); } catch (_) {} throw new Error('checksum mismatch'); }
   }
 
-  async function reloadHome() {
-    await sh('pkill -f "[a]pp-id=com.webos.app.home"; sleep 2');
-    await luna('luna://com.webos.applicationManager/launch', { id: 'com.webos.app.home' });
+  // fork: is our launcher the Home right now? (not when LG's Home is selected or the overlay is not mounted)
+  const homeOurs = () => !fs.existsSync(D + '/DISABLE') && (() => { try { return fs.readFileSync('/proc/mounts', 'utf8').includes(' /usr/palm/applications/com.webos.app.home '); } catch (_) { return false; } })();
+  async function reloadHome() {   // fork: real reload on webOS 6 (restarts webapp-mgr there)
+    await sh('sh ' + D + '/reload-home.sh', 90000);
   }
   async function swapIn(srcApp) {   // srcApp becomes D/app; the old one is kept as D/app.prev
     await sh('rm -rf ' + D + '/app.prev && mv ' + D + '/app ' + D + '/app.prev && mv ' + srcApp + ' ' + D + '/app && sh ' + D + '/stage-home.sh');
@@ -135,6 +136,12 @@ function create(ctx) {
       if (nv.minService && cmp(VERSION, nv.minService) < 0) throw new Error('needs service ' + nv.minService + ' or newer; update the service first');
       setJob('working', 'Installing launcher ' + ver);
       frontendOk = null;
+      if (!homeOurs()) {   // fork: with LG's Home selected the launcher cannot start to confirm itself; just put it in place
+        await swapIn(T + '/app');
+        setJob('done', 'Launcher ' + ver + ' installed; it is used once CleanYourTV is the Home again');
+        await sh('rm -rf ' + T);
+        return;
+      }
       await swapIn(T + '/app');
       await reloadHome();
       setJob('working', 'Checking that the new launcher starts');
@@ -149,7 +156,7 @@ function create(ctx) {
   }
   async function swapBack() {
     await sh('rm -rf ' + D + '/app.next && mv ' + D + '/app ' + D + '/app.next && mv ' + D + '/app.prev ' + D + '/app && mv ' + D + '/app.next ' + D + '/app.prev && sh ' + D + '/stage-home.sh');
-    await reloadHome();
+    if (homeOurs()) await reloadHome();
   }
   async function rollbackFrontend() {
     if (!prevInfo()) return setJob('error', 'there is no previous version');
